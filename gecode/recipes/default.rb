@@ -26,6 +26,8 @@ deb_exists = (node['platform'] == 'ubuntu' && ["lucid", "maverick"].include?(nod
 # we have tested building from source on the following platforms
 can_build_from_src = ['ubuntu', 'debian', 'redhat', 'centos'].include?(node['platform'])
 
+deb_native = (node['platform'] == 'ubuntu' && node["lsb"]["codename"] == "natty")
+
 if deb_exists
   include_recipe 'apt'
 
@@ -56,6 +58,13 @@ elsif can_build_from_src
     cd gecode-3.5.0 && ./configure
     make && make install
     EOH
+  end
+
+elsif deb_native
+  include_recipe 'apt'
+
+  apt_package 'libgecode-dev' do
+    action :install
   end
 
 else
