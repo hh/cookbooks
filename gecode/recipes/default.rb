@@ -46,6 +46,13 @@ if deb_exists
     action :install
   end
 
+elsif deb_native
+  include_recipe 'apt'
+
+  apt_package 'libgecode-dev' do
+    action :install
+  end
+
 elsif can_build_from_src
 
   include_recipe 'build-essential'
@@ -58,13 +65,6 @@ elsif can_build_from_src
     cd gecode-3.5.0 && ./configure
     make && make install
     EOH
-  end
-
-elsif deb_native
-  include_recipe 'apt'
-
-  apt_package 'libgecode-dev' do
-    action :install
   end
 
 else
