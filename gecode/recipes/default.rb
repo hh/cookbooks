@@ -26,6 +26,8 @@ deb_exists = (node['platform'] == 'ubuntu' && ["lucid", "maverick"].include?(nod
 # we have tested building from source on the following platforms
 can_build_from_src = ['ubuntu', 'debian', 'redhat', 'centos'].include?(node['platform'])
 
+deb_native = (node['platform'] == 'ubuntu' && node["lsb"]["codename"] == "natty")
+
 if deb_exists
   include_recipe 'apt'
 
@@ -39,6 +41,13 @@ if deb_exists
     action :add
     notifies :run, resources(:execute => "apt-get update"), :immediately
   end
+
+  apt_package 'libgecode-dev' do
+    action :install
+  end
+
+elsif deb_native
+  include_recipe 'apt'
 
   apt_package 'libgecode-dev' do
     action :install
