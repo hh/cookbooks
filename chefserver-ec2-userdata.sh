@@ -51,7 +51,8 @@ build-essential wget ssl-cert \
 couchdb couchdb-bin libcouchdb-glib-dev \
 libgecode27 libgecode-dev \
 rabbitmq-server \
-openjdk-6-jre 
+openjdk-6-jre \
+git
 # sun-java6-jre
 
 # centos5
@@ -84,6 +85,33 @@ cat<<EOF>/root/chef.json
 }
 EOF
 
-chef-solo -c /root/chef-solo.rb -j ~/chef.json -r http://s.codecafe.com/cccookbooks.tgz
+chef-solo -c ~/chef-solo.rb -j ~/chef.json -r http://s.codecafe.com/cccookbooks.tgz
 
-publicip=`/usr/bin/curl -s http://169.254.169.254/latest/meta-data/public-ipv4` && ( echo $publicip | /bin/mail -s "instance alive $publicip" ec2-notice@hippiehacker.org )
+# create 'sushi' admin apiclient, and setup the ubuntu user's knife config
+mkdir -p /home/ubuntu/.chef
+knife client create sushi -f /home/ubuntu/.chef/sushi.pem \
+ -u chef-webui -k /etc/chef/webui.pem \
+ --defaults --admin -n 
+chown -R ubuntu /home/ubuntu/.chef
+su - ubuntu -c 'knife configure -u sushi -k ~/.chef/sushi.pem -r ~/chef-repo --defaults -s http://localhost:4000 --defaults -n -y'
+
+# I didn't see an easy way to change the password, so here is a hack
+ruby <<EOF
+require 'rubygems'
+require 'chef/config'
+require 'chef/webui_user'
+Chef::Config.from_file(File.expand_path("/home/ubuntu/.chef/knife.rb"))
+user = Chef::WebUIUser.load('admin')
+user.set_password('CHANGEME')
+user.save
+EOF
+
+# maybe should populate the ~/chef-repo
+su - ubuntu -c 'git clone git://github.com/opscode/chef-repo.git'
+cp -a /home/ubuntu/.chef/* /home/ubuntu/chef-repo/.chef/
+chown -R ubuntu /home/ubuntu/chef-repo/.chef
+
+echo "I'm ready"
+echo "Be sure to enable access to tcp ports 4000, 4040, 8983, 5672"
+#broken
+#publicip=`/usr/bin/curl -s http://169.254.169.254/latest/meta-data/public-ipv4` && ( echo $publicip | /bin/mail -s "instance alive $publicip" ec2-notice@hippiehacker.org )
