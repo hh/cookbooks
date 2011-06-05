@@ -1,9 +1,5 @@
 #!/bin/bash
-# ami-8e1fece7 is a 64bit EBS based Amazon image
-# user-data.sh is this file
-#
-# ec2-run-instances --user-data-file chefserver-ec2-user-data.sh --key allclearid -t m1.large ami-1aad5273 | grep INSTANCE | cut -f 2 | xargs -I XXX ec2-create-tags XXX --tag Name=chefserver
-1
+#ec2-run-instances --user-data-file chefserver-ec2-userdata.sh -g chef-server --key allclearid -t m1.large --instance-initiated-shutdown-behavior terminate ami-1aad5273 | grep INSTANCE | INSTANCE=`cut -f 2` | xargs -I XXX ec2-create-tags XXX --tag Name=chefserver ; sleep 60 ; ec2-describe-instances $INSTANCE | grep INSTANCE | grep running | echo ssh ubuntu@`cut -f 4`
 # ami-1aad5273  - ubuntu 11.04 64bit server ebs
 # ami-2cc83145 - alestic ubunt 10.04 LTS 32bit server ebs
 # ami-2ec83147 - alestic ubunt 10.04 LTS 64bit server ebs
@@ -51,9 +47,12 @@ echo export HISTSIZE=5000 | tee -a /etc/skel/.bash_profile
 apt-get -y install ruby ruby-dev libopenssl-ruby irb #rdoc ri 
 # can we do without rdoc and ri?
 
-# system development tools
-apt-get -y install build-essential wget ssl-cert git
-
+# system development tools and IP's
+apt-get -y install build-essential wget ssl-cert git curl
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+LOCAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+PUBLIC_HOSTNAME=$(curl -s http://instance-data.ec2.internal/latest/meta-data/public-hostname)
+LOCAL_HOSTNAME=$(curl -s http://instance-data.ec2.internal/latest/meta-data/local-hostname)
 # centos5 if you want to go that route
 #sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
 #sudo wget -O /etc/yum.repos.d/aegis.repo http://rpm.aegisco.com/aegisco/el5/aegisco.repo
@@ -65,26 +64,28 @@ wget http://production.cf.rubygems.org/rubygems/rubygems-1.7.2.tgz
 tar zxf rubygems-1.7.2.tgz
 cd rubygems-1.7.2
 ruby setup.rb --no-format-executable
+echo gem: --no-ri --no-rdoc >> /etc/gemrc #no docs anywhere please
 cd -
 
 # get chef from rubygems, configure for a solo run, and setup chef-server with webui
 gem install chef
 
-cat <<EOF>/root/chef-solo.rb
+cat <<SOLOCONFIG>/root/chef-solo.rb
 file_cache_path "/tmp/chef-solo"
 cookbook_path "/tmp/chef-solo/cookbooks"
-EOF
+SOLOCONFIG
 
-cat<<EOF>/root/chef.json
+cat<<DNACONFIG>/root/chef.json
 {
   "chef_server": {
     "server_url": "http://localhost:4000",
     "webui_enabled": true,
-    "init_style": "init"
+    "init_style": "init",
+    "ssl_req": "/C=US/ST=Several/L=Locality/O=Example/OU=Operations/CN=$PUBLIC_HOSTNAME/emailAddress=ops@example.com"
   },
-  "run_list": [ "recipe[chef-server::rubygems-install]" ]
+  "run_list": [ "recipe[chef-server::rubygems-install]", "recipe[chef-server::apache-proxy]" ]
 }
-EOF
+DNACONFIG
 
 # basically the contents of this repo
 chef-solo -c ~/chef-solo.rb -j ~/chef.json -r http://s.codecafe.com/cccookbooks.tgz
@@ -95,7 +96,7 @@ su - -c "knife client create sushi -f /home/ubuntu/.chef/sushi.pem -u chef-webui
 chown -R ubuntu /home/ubuntu/.chef
 ## FIXME: maybe the server should be http://myinternalORexternalip:4000
 # give it a think
-su - ubuntu -c 'knife configure -u sushi -k ~/.chef/sushi.pem -r ~/chef-repo --defaults -s http://localhost:4000 --defaults -n -y'
+su - ubuntu -c "knife configure -u sushi -k ~/.chef/sushi.pem -r ~/chef-repo --defaults -s http://$LOCAL_IP:4000 --defaults -n -y"
 
 # I didn't see an easy way to change the password, so here is a hack
 ruby <<EOF
@@ -113,6 +114,9 @@ su - ubuntu -c 'git clone git://github.com/opscode/chef-repo.git'
 mkdir -p /home/ubuntu/chef-repo/.chef
 cp -a /home/ubuntu/.chef/* /home/ubuntu/chef-repo/.chef/
 chown -R ubuntu /home/ubuntu/chef-repo/.chef
+
+
+#knife configure -u sushi -k ~/.chef/sushi.pem -r ~/chef-repo --defaults -s http://localhost:4000 --defaults -n -y
 
 echo "I'm ready"
 echo "Be sure to enable access to tcp ports 4000, 4040, 8983, 5672"
