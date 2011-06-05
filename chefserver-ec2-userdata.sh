@@ -61,7 +61,7 @@ openjdk-6-jre
 
 cd /tmp
 wget http://production.cf.rubygems.org/rubygems/rubygems-1.7.2.tgz
-tar zxf rubygemps-1.7.2.tgz
+tar zxf rubygems-1.7.2.tgz
 cd rubygems-1.7.2
 ruby setup.rb --no-format-executable
 cd -
