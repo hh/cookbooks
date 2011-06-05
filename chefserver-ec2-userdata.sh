@@ -44,6 +44,8 @@ echo export HISTSIZE=5000 | tee -a /etc/skel/.bash_profile
 
 # END SETUP BASE SYSTEM
 
+# START CHEF BOOSTRAP
+# Mainly a scripting of http://wiki.opscode.com/display/chef/Bootstrap+Chef+RubyGems+Installation
 
 # system ruby
 apt-get -y install ruby ruby-dev libopenssl-ruby irb #rdoc ri 
@@ -91,6 +93,8 @@ chef-solo -c ~/chef-solo.rb -j ~/chef.json -r http://s.codecafe.com/cccookbooks.
 mkdir -p /home/ubuntu/.chef
 su - -c "knife client create sushi -f /home/ubuntu/.chef/sushi.pem -u chef-webui -k /etc/chef/webui.pem --defaults --admin -n"
 chown -R ubuntu /home/ubuntu/.chef
+## FIXME: maybe the server should be http://myinternalORexternalip:4000
+# give it a think
 su - ubuntu -c 'knife configure -u sushi -k ~/.chef/sushi.pem -r ~/chef-repo --defaults -s http://localhost:4000 --defaults -n -y'
 
 # I didn't see an easy way to change the password, so here is a hack
@@ -112,6 +116,7 @@ chown -R ubuntu /home/ubuntu/chef-repo/.chef
 
 echo "I'm ready"
 echo "Be sure to enable access to tcp ports 4000, 4040, 8983, 5672"
+echo "Now try http://wiki.opscode.com/display/chef/Quick+Start"
 
 #broken on ubuntu.. what mail should I install and configure so this goes out?
 #publicip=`/usr/bin/curl -s http://169.254.169.254/latest/meta-data/public-ipv4` && ( echo $publicip | /bin/mail -s "instance alive $publicip" ec2-notice@hippiehacker.org )
