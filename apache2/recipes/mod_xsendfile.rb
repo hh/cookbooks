@@ -1,9 +1,8 @@
 #
-# Author:: Seth Chisamore (<schisamo@opscode.com>)
-# Cookbook Name:: windows
-# Library:: helper
+# Cookbook Name:: apache2
+# Recipe:: mod_xsendfile 
 #
-# Copyright:: 2011, Opscode, Inc.
+# Copyright 2011, CustomInk, LLC.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,12 +17,11 @@
 # limitations under the License.
 #
 
-module Windows
-  class Helper
-
-    def self.win_friendly_path(path)
-      path.gsub(::File::SEPARATOR, ::File::ALT_SEPARATOR) if path
-    end
-
-  end
+case node['platform']
+when "debian","ubuntu"
+  package "libapache2-mod-xsendfile"
+when "centos","redhat","scientific","fedora"
+  package "mod_xsendfile"
 end
+
+apache_module "xsendfile"

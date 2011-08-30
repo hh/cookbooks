@@ -17,16 +17,41 @@
 #
 
 require 'chef/resource'
-require File.join(File.dirname(__FILE__), 'resource_firewall')
 
 class Chef
   class Resource
-    class UfwFirewall < Chef::Resource::Firewall
+    class Database < Chef::Resource
 
       def initialize(name, run_context=nil)
         super
-        @resource_name = :ufw_firewall
-        @provider = Chef::Provider::Firewall::Ufw
+        @resource_name = :database
+        @database_name = name
+        @allowed_actions.push(:create, :drop, :query)
+        @action = :create
+      end
+
+      def database_name(arg=nil)
+        set_or_return(
+          :database_name,
+          arg,
+          :kind_of => String
+        )
+      end
+
+      def connection(arg=nil)
+        set_or_return(
+          :connection,
+          arg,
+          :required => true
+        )
+      end
+
+      def sql(arg=nil)
+        set_or_return(
+          :sql,
+          arg,
+          :kind_of => String
+        )
       end
 
     end

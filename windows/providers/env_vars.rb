@@ -1,8 +1,9 @@
 #
-# Cookbook Name:: mysql
-# Resource:: database
+# Author:: Paul Morotn (<pmorton@biaprotect.com>)
+# Cookbook Name:: windows
+# Provider:: env_vars
 #
-# Copyright:: 2008-2011, Opscode, Inc <legal@opscode.com>
+# Copyright:: 2011, Business Intelligence Associates, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +18,16 @@
 # limitations under the License.
 #
 
-actions :flush_tables_with_read_lock, :unflush_tables, :create_db, :query
+action :create do
+  windows_registry Windows::KeyHelper::ENV_KEY do
+    values new_resource.name => new_resource.value
+    action :create
+  end
+end
 
-attribute :host, :kind_of => String
-attribute :username, :kind_of => String
-attribute :password, :kind_of => String
-attribute :database, :kind_of => String
-attribute :sql, :kind_of => String
-attribute :exists, :default => false
+action :remove do 
+  windows_registry Windows::KeyHelper::ENV_KEY do
+    values new_resource.name => ''
+    action :remove
+  end
+end
