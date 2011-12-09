@@ -42,7 +42,7 @@ svcs = value_for_platform(
   ["ubuntu", "debian"] => { "default" => ["smbd", "nmbd"] },
   ["redhat", "centos", "fedora"] => { "default" => ["smb", "nmb"] },
   "arch" => { "default" => [ "samba" ] },
-  "default" => ["smbd", "nmdb"]
+  "default" => ["smbd", "nmbd"]
 )
 
 svcs.each do |s|
