@@ -34,8 +34,10 @@ module Powershell
     end
 
     def interpreter
+      Chef::Log.debug "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
       Chef::Log.debug %x[dir #{File.dirname("#{ENV['WINDIR']}\\sysnative\\WindowsPowershell\\v1.0\\powershell.exe")}]
       Chef::Log.debug %x[dir #{File.dirname("#{ENV['WINDIR']}\\system32\\WindowsPowershell\\v1.0\\powershell.exe")}]
+      Chef::Log.debug "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
       # force 64-bit powershell from 32-bit ruby process
       if ::File.exist?("#{ENV['WINDIR']}\\sysnative\\WindowsPowershell\\v1.0\\powershell.exe")
         "#{ENV['WINDIR']}\\sysnative\\WindowsPowershell\\v1.0\\powershell.exe"
