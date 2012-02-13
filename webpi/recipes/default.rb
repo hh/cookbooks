@@ -18,6 +18,8 @@
 # limitations under the License.
 #
 
+include_recipe 'windows'
+
 file_name = ::File.basename(node['webpi']['url'])
 
 remote_file "#{Chef::Config[:file_cache_path]}/#{file_name}" do
